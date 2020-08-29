@@ -1,6 +1,14 @@
-import { Resolver, Query, Ctx, Arg, Int, Mutation } from "type-graphql";
+import { Resolver, Query, Ctx, Arg, Mutation } from "type-graphql";
 import { Post } from "../entities/Post";
 import { MyContext } from "src/types";
+
+// we want to define the type of the query it is an array of posts so we did [Posts]
+// we have to make the Entity in src/entities/Post in a graphql way so we will head to the file and change it
+
+// in order to make any request to the DB and make any change we have to access the orm.em from index.ts
+// steps:
+// 1- add this resolver to schema in index.ts
+// 2- made a context method that make orm.em accessable from all resolvers in index.ts
 
 @Resolver()
 export class PostResolver {
@@ -31,6 +39,7 @@ export class PostResolver {
     return post;
   }
 
+  // update post
   @Mutation(() => Post, { nullable: true })
   async updatePost(
     @Arg("id") id: number,
@@ -48,25 +57,28 @@ export class PostResolver {
     return post;
   }
 
-  @Mutation(() => Post)
+  // delete post
+  // @Mutation(() => Post)
+  // async deletePost(
+  //   @Arg("id") id: number,
+  //   @Ctx() { em }: MyContext
+  // ): Promise<Post | null> {
+  //   const post = await em.findOne(Post, { id });
+  //   if (!post) {
+  //     return null;
+  //   }
+
+  //   await em.removeAndFlush(post);
+  //   return post;
+  // }
+
+  // ben awad way
+  @Mutation(() => Boolean)
   async deletePost(
     @Arg("id") id: number,
     @Ctx() { em }: MyContext
-  ): Promise<Post | null> {
-    const post = await em.findOne(Post, { id });
-    if (!post) {
-      return null;
-    }
-
-    await em.removeAndFlush(post);
-    return post;
+  ): Promise<Boolean> {
+    em.nativeDelete(Post, { id });
+    return true;
   }
 }
-
-// we want to define the type of the query it is an array of posts so we did [Posts]
-// we have to make the Entity in src/entities/Post in a graphql way so we will head to the file and change it
-
-// in order to make any request to the DB and make any change we have to access the orm.em from index.ts
-// steps:
-// 1- add this resolver to schema in index.ts
-// 2- made a context method that make orm.em accessable from all resolvers in index.ts
