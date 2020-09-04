@@ -40,7 +40,7 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
     @Arg("options") options: UsernamePassword,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     if (options.username.length <= 3) {
       return {
@@ -68,13 +68,15 @@ export class UserResolver {
       password: hashedPassword,
     });
     await em.persistAndFlush(user);
+    req.session!.userId = user.id;
+
     return { user };
   }
 
   @Mutation(() => UserResponse)
   async login(
     @Arg("options") options: UsernamePassword,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     const user = await em.findOne(User, { username: options.username });
     if (!user) {
@@ -98,6 +100,8 @@ export class UserResolver {
         ],
       };
     }
+
+    req.session!.userId = user.id;
     return {
       user,
     };
