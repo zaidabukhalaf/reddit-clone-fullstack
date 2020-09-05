@@ -10,7 +10,7 @@ import { UserResolver } from "./resolver/user";
 import redis from "redis";
 import session from "express-session";
 import connectRedis from "connect-redis";
-import { MyContext } from "./types";
+import cors from "cors";
 
 const RedisStore = connectRedis(session);
 const redisClient = redis.createClient();
@@ -20,7 +20,12 @@ const main = async () => {
   await orm.getMigrator().up(); // create migration before executing
 
   const app = express();
-
+  app.use(
+    cors({
+      origin: "http://localhost:3000",
+      credentials: true,
+    })
+  );
   app.use(
     session({
       name: "qid", // session name
@@ -46,14 +51,17 @@ const main = async () => {
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }): MyContext => ({
+    context: ({ req, res }) => ({
       em: orm.em,
       req,
       res,
     }),
   });
 
-  apolloServer.applyMiddleware({ app });
+  apolloServer.applyMiddleware({
+    app,
+    cors: false,
+  });
 
   app.listen(5000, () => {
     console.log("running on port localhost:5000");
